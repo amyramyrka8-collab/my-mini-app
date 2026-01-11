@@ -5,82 +5,120 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مركز الأرباح</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <script src='//libtl.com/sdk.js' data-zone='10449377' data-sdk='show_10449377'></script>
+
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; text-align: center; padding: 15px; margin: 0; }
+        body { font-family: sans-serif; background-color: #f0f2f5; text-align: center; padding: 15px; }
         .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-        .stats-grid { display: flex; justify-content: space-around; margin: 15px 0; background: #f8f9fa; padding: 10px; border-radius: 15px; }
-        .stat-value { display: block; font-size: 18px; font-weight: bold; color: #0088cc; }
-        .btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; margin: 8px 0; transition: 0.3s; color: white; }
-        .btn-watch { background: linear-gradient(45deg, #0088cc, #00aaff); }
+        .stats-container { display: flex; justify-content: space-around; margin-bottom: 20px; background: #f9f9f9; padding: 15px; border-radius: 15px; border: 1px solid #eee; }
+        .stat-value { font-size: 18px; font-weight: bold; color: #0088cc; display: block; }
+        .stat-label { font-size: 12px; color: #777; }
+        .btn { width: 100%; padding: 12px; border-radius: 12px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; margin: 8px 0; color: white; }
+        .btn-watch { background: #0088cc; }
         .btn-invite { background: #6f42c1; }
-        .btn-withdraw { background: #28a745; opacity: 0.7; }
-        .referral-box { background: #fff3cd; padding: 10px; border-radius: 10px; margin-top: 15px; font-size: 13px; }
+        .btn-withdraw { background: #888888; opacity: 0.7; }
+        .info-text { font-size: 13px; color: #d9534f; margin: 10px 0; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="card">
         <h2>💰 مركز الأرباح</h2>
-        <div class="stats-grid">
-            <div><span class="stat-value" id="view-count">0</span> إعلان</div>
-            <div><span class="stat-value" id="balance">0.0000</span> $</div>
+        
+        <div class="stats-container">
+            <div class="stat-item">
+                <span class="stat-label">إجمالي الأرباح</span>
+                <span id="balance-display" class="stat-value">0.0000$</span>
+            </div>
+            <div class="stat-item" style="border-right: 1px solid #ddd;">
+                <span class="stat-label">المشاهدات</span>
+                <span id="views-display" class="stat-value">0</span>
+            </div>
         </div>
-        
-        <button class="btn btn-watch" onclick="watchAd()">📺 مشاهدة إعلان جديد</button>
-        
-        <div class="referral-box">
-            <strong>🎁 نظام الإحالة</strong>
-            <p>اربح 0.005$ عن كل صديق تدعوه!</p>
-            <button class="btn btn-invite" onclick="inviteFriend()">🔗 دعوة الأصدقاء الآن</button>
-        </div>
-        
-        <button class="btn btn-withdraw" onclick="withdraw()">💳 سحب الأرباح</button>
+
+        <p class="info-text">كل 20 إعلان بـ 0.001$</p>
+
+        <button class="btn btn-watch" onclick="handleAdRotation()">📺 مشاهدة إعلان</button>
+        <button class="btn btn-invite" onclick="inviteFriend()">🔗 دعوة الأصدقاء (0.005$)</button>
+        <button class="btn btn-withdraw" onclick="tg.showAlert('سيتم تفعيل السحب قريباً!')">💳 سحب الأرباح (قريباً)</button>
     </div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        // تحميل البيانات من ذاكرة الهاتف
         let views = parseInt(localStorage.getItem('views')) || 0;
         let balance = parseFloat(localStorage.getItem('balance')) || 0.0;
-        updateDisplay();
+        let adStep = parseInt(localStorage.getItem('adStep')) || 1; // لتتبع أي إعلان عليه الدور
 
-        function updateDisplay() {
-            document.getElementById('view-count').innerText = views;
-            document.getElementById('balance').innerText = balance.toFixed(4);
+        updateDisplays();
+
+        function updateDisplays() {
+            document.getElementById('views-display').innerText = views;
+            document.getElementById('balance-display').innerText = balance.toFixed(4) + "$";
         }
 
-        function watchAd() {
-            // فتح إعلان Monetag
+        function handleAdRotation() {
+            if (typeof show_10449377 !== 'function') {
+                // إذا لم يتم تحميل السكربت، نفتح الرابط المباشر فوراً
+                openDirectLink();
+                return;
+            }
+
+            if (adStep === 1) {
+                // 1. إعلان بيني عادي
+                show_10449377().then(() => { processReward(2); }).catch(nextStep);
+            } 
+            else if (adStep === 2) {
+                // 2. إعلان بيني داخل التطبيق
+                show_10449377({ type: 'inApp', inAppSettings: { timeout: 1, interval: 30, frequency: 1 } }).then(() => { processReward(3); }).catch(nextStep);
+            } 
+            else if (adStep === 3) {
+                // 3. إعلان مكافأة (Pop)
+                show_10449377('pop').then(() => { processReward(4); }).catch(nextStep);
+            } 
+            else {
+                // 4. رابط مباشر
+                openDirectLink();
+            }
+        }
+
+        function openDirectLink() {
             tg.openLink("https://otieu.com/4/10449394");
+            // الرابط المباشر نعتبره تمت مشاهدته بعد 5 ثوانٍ
+            setTimeout(() => { processReward(1); }, 5000);
+        }
+
+        function nextStep() {
+            // في حال فشل إعلان، ننتقل للخطوة التالية تلقائياً
+            adStep = adStep >= 4 ? 1 : adStep + 1;
+            localStorage.setItem('adStep', adStep);
+            handleAdRotation();
+        }
+
+        function processReward(nextAdStep) {
+            views++;
+            if (views % 20 === 0) { balance += 0.001; }
             
-            // احتساب النقطة بعد 5 ثوانٍ
-            setTimeout(() => {
-                views++;
-                if (views % 30 === 0) { balance += 0.001; }
-                saveData();
-                tg.sendData("ad_watched"); // إرسال إشارة للبوت لتوثيق المشاهدة
-            }, 5000);
+            // تحديث خطوة الإعلان التالية
+            adStep = nextAdStep;
+            localStorage.setItem('adStep', adStep);
+            
+            saveData();
         }
 
         function saveData() {
             localStorage.setItem('views', views);
             localStorage.setItem('balance', balance);
-            updateDisplay();
+            updateDisplays();
+            tg.sendData("ad_watched");
         }
 
         function inviteFriend() {
-            const botUsername = "PointsAdsbot"; // تأكد أنه يوزر بوتك
-            const userId = tg.initDataUnsafe.user.id;
-            const inviteLink = `https://t.me/${botUsername}?start=${userId}`;
-            const text = encodeURIComponent("اربح المال من مشاهدة الإعلانات! 💰 سجل من رابطي واحصل على هدية:");
-            const shareUrl = `https://t.me/share/url?url=${inviteLink}&text=${text}`;
-            
-            tg.openTelegramLink(shareUrl); // فتح واجهة المشاركة الرسمية
-        }
-
-        function withdraw() {
-            tg.showAlert("الحد الأدنى للسحب هو 1.00$. رصيدك الحالي: " + balance.toFixed(4));
+            const botUsername = "PointsAdsbot"; 
+            const inviteLink = `https://t.me/${botUsername}?start=${tg.initDataUnsafe.user.id}`;
+            const text = encodeURIComponent("اربح المال من مشاهدة الإعلانات! 💰");
+            tg.openTelegramLink(`https://t.me/share/url?url=${inviteLink}&text=${text}`);
         }
     </script>
 </body>
