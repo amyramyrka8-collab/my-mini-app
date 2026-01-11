@@ -6,30 +6,20 @@ here<!DOCTYPE html>
     <title>مركز الأرباح</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; background-color: #f0f2f5; text-align: center; padding: 15px; margin: 0; overflow: hidden; }
+        body { font-family: sans-serif; background-color: #f0f2f5; text-align: center; padding: 15px; margin: 0; }
         .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
         .stats-container { display: flex; justify-content: space-around; margin-bottom: 20px; background: #f9f9f9; padding: 10px; border-radius: 15px; border: 1px solid #eee; }
         .stat-value { font-size: 18px; font-weight: bold; color: #0088cc; display: block; }
         .stat-label { font-size: 12px; color: #777; }
-        .btn { width: 100%; padding: 12px; border-radius: 12px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; margin: 8px 0; color: white; }
+        .btn { width: 100%; padding: 12px; border-radius: 12px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; margin: 8px 0; color: white; transition: 0.3s; }
         .btn-watch { background: #0088cc; }
         .btn-invite { background: #6f42c1; }
         .btn-withdraw { background: #888888; cursor: not-allowed; opacity: 0.7; }
-        
-        /* واجهة الإعلان */
-        #ad-screen {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: white; z-index: 1000;
-        }
-        #ad-frame { width: 100%; height: 85%; border: none; }
-        .ad-header { height: 15%; background: #222; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 5px; }
-        #confirm-btn { background: #28a745; display: none; padding: 12px 25px; border-radius: 10px; border: none; color: white; font-weight: bold; cursor: pointer; }
-        #timer-txt { font-size: 14px; font-weight: bold; color: #ff9800; }
     </style>
 </head>
 <body>
 
-    <div id="main-ui" class="card">
+    <div class="card">
         <h2>💰 مركز الأرباح</h2>
         
         <div class="stats-container">
@@ -43,20 +33,13 @@ here<!DOCTYPE html>
             </div>
         </div>
 
-        <p style="font-size: 13px; color: #d9534f; font-weight: bold; margin-bottom: 15px;">كل 20 إعلان بـ 0.001$</p>
+        <p style="font-size: 13px; color: #d9534f; font-weight: bold;">كل 20 إعلان بـ 0.001$</p>
 
-        <button class="btn btn-watch" onclick="openAdScreen()">📺 مشاهدة إعلان جديد</button>
-        <button class="btn btn-invite" onclick="invite()">🔗 دعوة أصدقاء (0.005$)</button>
-        
-        <button class="btn btn-withdraw" onclick="tg.showAlert('سيتم تفعيل السحب قريباً عند اكتمال التحديثات!')">💳 سحب الأرباح (قريباً)</button>
-    </div>
-
-    <div id="ad-screen">
-        <div class="ad-header">
-            <div id="timer-txt">⏳ يرجى البقاء في صفحة الإعلان: <span id="sec">15</span> ثانية...</div>
-            <button id="confirm-btn" onclick="closeAdAndReward()">✅ تأكيد المشاهدة والعودة</button>
+        <div id="buttons-area">
+            <button class="btn btn-watch" onclick="watchAdNow()">📺 مشاهدة إعلان جديد</button>
+            <button class="btn btn-invite" onclick="invite()">🔗 دعوة أصدقاء (0.005$)</button>
+            <button class="btn btn-withdraw" onclick="tg.showAlert('سيتم تفعيل السحب قريباً!')">💳 سحب الأرباح (قريباً)</button>
         </div>
-        <iframe id="ad-frame" src=""></iframe>
     </div>
 
     <script>
@@ -72,50 +55,28 @@ here<!DOCTYPE html>
         }
         updateUI();
 
-        function openAdScreen() {
-            // فتح رابط الإعلان المباشر داخل الإطار
-            document.getElementById('ad-frame').src = "https://otieu.com/4/10449394";
-            document.getElementById('ad-screen').style.display = 'block';
-            
-            let timeLeft = 15;
-            document.getElementById('sec').innerText = timeLeft;
-            document.getElementById('timer-txt').style.display = 'block';
-            document.getElementById('confirm-btn').style.display = 'none';
+        function watchAdNow() {
+            // 1. فتح رابط الإعلان المباشر
+            tg.openLink("https://otieu.com/4/10449394");
 
-            let timer = setInterval(() => {
-                timeLeft--;
-                document.getElementById('sec').innerText = timeLeft;
-                if (timeLeft <= 0) {
-                    clearInterval(timer);
-                    document.getElementById('timer-txt').style.display = 'none';
-                    document.getElementById('confirm-btn').style.display = 'block';
-                }
-            }, 1000);
-        }
-
-        function closeAdAndReward() {
-            // لا تحتسب المشاهدة إلا عند الضغط هنا بعد الـ 15 ثانية
+            // 2. احتساب المكافأة فوراً دون انتظار
             views++;
             if (views % 20 === 0) {
                 balance += 0.001;
             }
             
+            // 3. حفظ البيانات وتحديث الواجهة
             localStorage.setItem('views', views);
             localStorage.setItem('balance', balance);
             updateUI();
             
-            // تنظيف وإخفاء شاشة الإعلان
-            document.getElementById('ad-screen').style.display = 'none';
-            document.getElementById('ad-frame').src = "";
-            
-            // إرسال البيانات للبوت
+            // 4. إرسال إشارة للبوت
             tg.sendData("ad_watched");
         }
 
         function invite() {
             const link = `https://t.me/PointsAdsbot?start=${tg.initDataUnsafe.user.id}`;
-            const text = "اربح المال من مشاهدة الإعلانات! 💰";
-            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=اربح المال!`);
         }
     </script>
 </body>
