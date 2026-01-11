@@ -1,4 +1,4 @@
-here<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -15,6 +15,7 @@ here<!DOCTYPE html>
         .btn-watch { background: #0088cc; }
         .btn-invite { background: #6f42c1; }
         .btn-withdraw { background: #888888; cursor: not-allowed; opacity: 0.7; }
+        .status-msg { font-size: 12px; color: #ff9800; font-weight: bold; display: none; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -36,7 +37,9 @@ here<!DOCTYPE html>
         <p style="font-size: 13px; color: #d9534f; font-weight: bold;">كل 20 إعلان بـ 0.001$</p>
 
         <div id="buttons-area">
-            <button class="btn btn-watch" onclick="watchAdNow()">📺 مشاهدة إعلان جديد</button>
+            <button id="main-btn" class="btn btn-watch" onclick="handleWatchClick()">📺 مشاهدة إعلان جديد</button>
+            <div id="loading-msg" class="status-msg">⏳ جاري التحقق من المشاهدة (10 ثوانٍ)...</div>
+            
             <button class="btn btn-invite" onclick="invite()">🔗 دعوة أصدقاء (0.005$)</button>
             <button class="btn btn-withdraw" onclick="tg.showAlert('سيتم تفعيل السحب قريباً!')">💳 سحب الأرباح (قريباً)</button>
         </div>
@@ -55,23 +58,39 @@ here<!DOCTYPE html>
         }
         updateUI();
 
-        function watchAdNow() {
-            // 1. فتح رابط الإعلان المباشر
+        function handleWatchClick() {
+            // 1. فتح الرابط فوراً
             tg.openLink("https://otieu.com/4/10449394");
 
-            // 2. احتساب المكافأة فوراً دون انتظار
-            views++;
-            if (views % 20 === 0) {
-                balance += 0.001;
-            }
+            // 2. تعطيل الزر وإظهار رسالة انتظار بسيطة
+            const btn = document.getElementById('main-btn');
+            const msg = document.getElementById('loading-msg');
             
-            // 3. حفظ البيانات وتحديث الواجهة
-            localStorage.setItem('views', views);
-            localStorage.setItem('balance', balance);
-            updateUI();
-            
-            // 4. إرسال إشارة للبوت
-            tg.sendData("ad_watched");
+            btn.disabled = true;
+            btn.style.opacity = "0.5";
+            msg.style.display = "block";
+
+            // 3. الانتظار لمدة 10 ثوانٍ قبل احتساب الأرباح
+            setTimeout(() => {
+                // احتساب المكافأة
+                views++;
+                if (views % 20 === 0) {
+                    balance += 0.001;
+                }
+                
+                // حفظ البيانات وتحديث الواجهة
+                localStorage.setItem('views', views);
+                localStorage.setItem('balance', balance);
+                updateUI();
+                
+                // إعادة تفعيل الزر وإخفاء الرسالة
+                btn.disabled = false;
+                btn.style.opacity = "1";
+                msg.style.display = "none";
+                
+                // إرسال البيانات للبوت
+                tg.sendData("ad_watched");
+            }, 10000); // 10000 ميلي ثانية = 10 ثوانٍ
         }
 
         function invite() {
