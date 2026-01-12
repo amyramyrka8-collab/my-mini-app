@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+here<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مركز الأرباح المطور</title>
 
-    <meta name="5639f65b96d592a08e2ed71dca959184aade9946" content="5639f65b96d592a08e2ed71dca959184aade9946" />
+    <meta name="cf9fef919c62aee6de7e9e5fd6b830716be7669f" content="cf9fef919c62aee6de7e9e5fd6b830716be7669f" />
 
     <script src="https://telegram.org/js/telegram-web-app.js?v=2.0"></script>
     <script src='//libtl.com/sdk.js' data-zone='10449377' data-sdk='show_10449377'></script>
@@ -57,10 +57,9 @@
     let balance = parseFloat(localStorage.getItem('balance')) || 0.0;
     document.getElementById('balance').innerText = balance.toFixed(4);
 
-    // الرابط الاحتياطي
     const fallbackLink = "https://disappearinghew.com/edrymfcidf?key=893d88989505914e9836a0f44b52ddad";
 
-    // 1. تشغيل الإعلان البيني (In-App Interstitial)
+    // إعداد الإعلان البيني (Interstitial)
     show_10449377({
       type: 'inApp',
       inAppSettings: {
@@ -72,23 +71,19 @@
       }
     });
 
-    // 2. معالجة إعلان المكافأة
     function handleAdReward() {
         const btn = document.getElementById('ad-btn');
         btn.disabled = true;
         btn.style.opacity = "0.5";
 
-        // محاولة تشغيل إعلان المكافأة من الـ SDK
         show_10449377('pop').then(() => {
-            // نجاح المشاهدة
             addBalance(0.0010);
-            tg.showAlert("✅ تمت إضافة مكافأة المشاهدة بنجاح!");
+            tg.showAlert("✅ تمت إضافة المكافأة بنجاح!");
             btn.disabled = false;
             btn.style.opacity = "1";
         }).catch(e => {
-            // في حال فشل الـ SDK، نفتح الرابط المباشر كخيار احتياطي
             window.open(fallbackLink, '_blank');
-            tg.showAlert("⚠️ تعذر تحميل إعلان الفيديو، تم فتح إعلان بديل. انتظر قليلاً ثم حاول مرة أخرى.");
+            tg.showAlert("⚠️ تعذر تحميل فيديو المكافأة، تم فتح إعلان بديل.");
             btn.disabled = false;
             btn.style.opacity = "1";
         });
@@ -103,7 +98,7 @@
 
     function showWithdrawModal() {
         if (balance < 1.0) {
-            tg.showAlert("⚠️ رصيدك أقل من 1.00$");
+            tg.showAlert("⚠️ رصيدك أقل من 1.00$ حالياً.");
         } else {
             document.getElementById('withdraw-modal').style.display = 'block';
         }
@@ -116,7 +111,7 @@
     function submitWithdraw() {
         const binanceId = document.getElementById('binance-id').value;
         if (binanceId.length < 5) {
-            tg.showAlert("❌ يرجى إدخال Binance ID صحيح");
+            tg.showAlert("❌ يرجى إدخال Binance ID صحيح.");
             return;
         }
 
@@ -126,7 +121,7 @@
             binance_id: binanceId
         }));
 
-        tg.showAlert("✅ تم إرسال طلب السحب للمسؤول!");
+        tg.showAlert("✅ تم إرسال الطلب للمراجعة!");
         hideWithdrawModal();
     }
 </script>
