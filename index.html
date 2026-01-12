@@ -21,7 +21,7 @@
         #withdraw-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; }
         .modal-content { background: white; width: 85%; max-width: 350px; margin: 25% auto; padding: 20px; border-radius: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
         .modal-content input { width: 90%; padding: 12px; margin: 15px 0; border-radius: 10px; border: 1px solid #ddd; text-align: center; font-size: 14px; }
-        .method-btn { background: #f8f9fa; border: 1px solid #0088cc; padding: 12px; margin: 8px 0; border-radius: 10px; display: block; width: 100%; font-weight: bold; color: #333; cursor: pointer; }
+        .method-btn { background: #fff9e6; border: 1px solid #f3ba2f; padding: 12px; margin: 8px 0; border-radius: 10px; display: block; width: 100%; font-weight: bold; color: #333; cursor: pointer; }
         .close-modal { color: #d9534f; font-weight: bold; cursor: pointer; margin-top: 15px; display: inline-block; }
     </style>
 </head>
@@ -54,13 +54,12 @@
 
     <div id="withdraw-modal">
         <div class="modal-content">
-            <h3>طلب سحب أرباح</h3>
+            <h3 style="color: #f3ba2f;">Binance Pay السحب عبر</h3>
             <p style="font-size: 11px; color: #666;">الحد الأدنى للسحب هو 1.00$</p>
             
-            <input type="text" id="wallet-address" placeholder="أدخل عنوان المحفظة (USDT / TRX)">
+            <input type="number" id="binance-id" placeholder="أدخل Binance ID الخاص بك">
             
-            <button class="method-btn" onclick="processWithdraw('USDT (TRC20)')">🚀 سحب عبر USDT</button>
-            <button class="method-btn" onclick="processWithdraw('TRON (TRX)')">💎 سحب عبر TRX</button>
+            <button class="method-btn" onclick="processWithdraw('Binance Pay')">🟡 سحب فوراً إلى Binance Pay</button>
             
             <span class="close-modal" onclick="closeWithdraw()">❌ إغلاق النافذة</span>
         </div>
@@ -70,7 +69,6 @@
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        // تحميل البيانات من الذاكرة المحلية
         let views = parseInt(localStorage.getItem('views')) || 0;
         let balance = parseFloat(localStorage.getItem('balance')) || 0.0;
 
@@ -80,55 +78,41 @@
         }
         updateUI();
 
-        // دالة مشاهدة الإعلان
         function handleWatchClick() {
-            tg.openLink("https://otieu.com/4/10449394"); // رابط الإعلان الخاص بك
+            tg.openLink("https://otieu.com/4/10449394");
             
             const btn = document.getElementById('main-btn');
             const msg = document.getElementById('loading-msg');
             
-            btn.disabled = true;
-            btn.style.opacity = "0.5";
-            msg.style.display = "block";
+            btn.disabled = true; btn.style.opacity = "0.5"; msg.style.display = "block";
 
-            // الانتظار 10 ثوانٍ قبل إضافة الربح
             setTimeout(() => {
                 views++;
-                if (views % 20 === 0) {
-                    balance += 0.001;
-                }
-                
+                if (views % 20 === 0) { balance += 0.001; }
                 localStorage.setItem('views', views);
                 localStorage.setItem('balance', balance);
                 updateUI();
-                
-                btn.disabled = false;
-                btn.style.opacity = "1";
-                msg.style.display = "none";
-                
-                // إخطار البوت بمشاهدة الإعلان
+                btn.disabled = false; btn.style.opacity = "1"; msg.style.display = "none";
                 tg.sendData(JSON.stringify({ "type": "ad_view", "views": views }));
             }, 10000);
         }
 
-        // دوال نافذة السحب
         function openWithdraw() { document.getElementById('withdraw-modal').style.display = 'block'; }
         function closeWithdraw() { document.getElementById('withdraw-modal').style.display = 'none'; }
 
         function processWithdraw(method) {
-            let wallet = document.getElementById('wallet-address').value;
+            let wallet = document.getElementById('binance-id').value;
             
             if (balance < 1.0) {
                 tg.showAlert(`رصيدك ${balance.toFixed(4)}$ غير كافٍ.\nتحتاج للوصول إلى 1.00$ للسحب.`);
                 return;
             }
             
-            if (wallet.trim().length < 10) {
-                tg.showAlert("يرجى إدخال عنوان محفظة صحيح لاستلام الأموال!");
+            if (wallet.trim().length < 5) {
+                tg.showAlert("يرجى إدخال معرف Binance ID صحيح!");
                 return;
             }
 
-            // إرسال طلب السحب إلى البوت كبيانات JSON
             let withdrawData = {
                 "type": "withdraw",
                 "method": method,
@@ -137,8 +121,7 @@
             };
 
             tg.sendData(JSON.stringify(withdrawData));
-            
-            tg.showAlert("✅ تم إرسال طلبك بنجاح!\nسيصلك إشعار عند اكتمال التحويل.");
+            tg.showAlert("✅ تم إرسال طلب سحب Binance Pay بنجاح!");
             closeWithdraw();
         }
 
