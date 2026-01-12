@@ -1,134 +1,136 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مركز الأرباح</title>
+    <title>مركز الأرباح المطور</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; text-align: center; padding: 15px; margin: 0; }
         .card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-        .stats-container { display: flex; justify-content: space-around; margin-bottom: 20px; background: #f9f9f9; padding: 15px; border-radius: 15px; border: 1px solid #eee; }
-        .stat-value { font-size: 18px; font-weight: bold; color: #0088cc; display: block; }
-        .stat-label { font-size: 12px; color: #777; }
-        .btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; margin: 10px 0; color: white; transition: 0.3s; }
-        .btn-watch { background: #0088cc; }
-        .btn-invite { background: #6f42c1; }
-        .btn-withdraw { background: #28a745; }
-        .status-msg { font-size: 13px; color: #ff9800; font-weight: bold; display: none; margin-top: 5px; }
+        .balance-box { background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+        .balance-amount { font-size: 30px; font-weight: bold; color: #1976d2; }
+        .btn { width: 100%; padding: 16px; border-radius: 12px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: 0.3s; }
+        .btn-main { background: #0088cc; color: white; }
+        .btn-withdraw { background: #ff9800; color: white; }
+        #timer-msg { display: none; color: #d32f2f; font-weight: bold; margin-top: 10px; padding: 10px; background: #ffebee; border-radius: 10px; }
         
-        /* تصميم نافذة السحب */
-        #withdraw-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; }
-        .modal-content { background: white; width: 85%; max-width: 350px; margin: 25% auto; padding: 20px; border-radius: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
-        .modal-content input { width: 90%; padding: 12px; margin: 15px 0; border-radius: 10px; border: 1px solid #ddd; text-align: center; font-size: 14px; }
-        .method-btn { background: #fff9e6; border: 1px solid #f3ba2f; padding: 12px; margin: 8px 0; border-radius: 10px; display: block; width: 100%; font-weight: bold; color: #333; cursor: pointer; }
-        .close-modal { color: #d9534f; font-weight: bold; cursor: pointer; margin-top: 15px; display: inline-block; }
+        /* نافذة السحب */
+        #withdraw-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 1000; }
+        .modal-content { background: white; width: 85%; max-width: 320px; margin: 25% auto; padding: 20px; border-radius: 20px; }
+        .modal-content input { width: 90%; padding: 12px; margin: 15px 0; border-radius: 10px; border: 1px solid #ddd; text-align: center; font-size: 16px; }
+        .confirm-btn { background: #28a745; color: white; border: none; padding: 12px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h2 style="color: #333;">💰 مركز الأرباح</h2>
+<div class="card">
+    <div class="balance-box">
+        <span style="font-size: 14px; color: #666;">رصيدك المتوفر</span><br>
+        <span id="balance" class="balance-amount">0.0000</span> <span style="font-weight: bold; color: #1976d2;">$</span>
+    </div>
+
+    <button id="ad-btn" class="btn btn-main" onclick="startAdProcess()">📺 شاهد إعلان واربح</button>
+    <div id="timer-msg">⏳ يرجى الانتظار: <span id="seconds">15</span> ثانية...</div>
+
+    <button class="btn btn-withdraw" onclick="showWithdrawModal()">💳 سحب الأرباح (Binance)</button>
+</div>
+
+<div id="withdraw-modal">
+    <div class="modal-content">
+        <h3>طلب سحب رصيد</h3>
+        <p style="font-size: 12px; color: #666;">الحد الأدنى للسحب هو 1.00$</p>
+        <input type="number" id="binance-id" placeholder="أدخل Binance ID الخاص بك">
+        <button class="confirm-btn" onclick="submitWithdraw()">تأكيد السحب</button>
+        <p onclick="hideWithdrawModal()" style="color:red; cursor:pointer; margin-top:15px; font-size:14px;">إلغاء</p>
+    </div>
+</div>
+
+<script>
+    let tg = window.Telegram.WebApp;
+    tg.expand();
+
+    let balance = parseFloat(localStorage.getItem('balance')) || 0.0;
+    let lastLinkUsed = localStorage.getItem('lastLink') || "2"; // للتبديل بين الروابط
+    document.getElementById('balance').innerText = balance.toFixed(4);
+
+    // الروابط الخاصة بك
+    const link1 = "https://disappearinghew.com/kywvmbxhmq?key=b7c5f19306a7d0e359dedad1002e9053";
+    const link2 = "https://disappearinghew.com/edrymfcidf?key=893d88989505914e9836a0f44b52ddad";
+
+    function startAdProcess() {
+        // تحديد الرابط الذي سيفتح الآن (تبديل)
+        let currentLink = (lastLinkUsed === "2") ? link1 : link2;
+        localStorage.setItem('lastLink', (lastLinkUsed === "2") ? "1" : "2");
+        lastLinkUsed = localStorage.getItem('lastLink');
+
+        window.open(currentLink, '_blank');
+
+        const btn = document.getElementById('ad-btn');
+        const msg = document.getElementById('timer-msg');
+        const secSpan = document.getElementById('seconds');
         
-        <div class="stats-container">
-            <div>
-                <span class="stat-label">الأرباح</span>
-                <span id="bal-txt" class="stat-value">0.0000$</span>
-            </div>
-            <div style="border-right: 1px solid #ddd; padding-right: 20px;">
-                <span class="stat-label">المشاهدات</span>
-                <span id="view-txt" class="stat-value">0</span>
-            </div>
-        </div>
+        btn.disabled = true;
+        btn.style.opacity = "0.5";
+        msg.style.display = "block";
 
-        <p style="font-size: 13px; color: #d9534f; font-weight: bold;">المكافأة: كل 20 إعلان بـ 0.001$</p>
+        let timeLeft = 15;
+        // نظام عداد دقيق يعتمد على التوقيت الفعلي للنظام
+        let endTime = Date.now() + (timeLeft * 1000);
 
-        <div id="buttons-area">
-            <button id="main-btn" class="btn btn-watch" onclick="handleWatchClick()">📺 مشاهدة إعلان جديد</button>
-            <div id="loading-msg" class="status-msg">⏳ جاري التحقق من المشاهدة (10 ثوانٍ)...</div>
-            
-            <button class="btn btn-invite" onclick="invite()">🔗 دعوة أصدقاء (0.005$)</button>
-            <button class="btn btn-withdraw" onclick="openWithdraw()">💳 سحب الأرباح</button>
-        </div>
-    </div>
+        const timer = setInterval(() => {
+            let now = Date.now();
+            let remaining = Math.round((endTime - now) / 1000);
 
-    <div id="withdraw-modal">
-        <div class="modal-content">
-            <h3 style="color: #f3ba2f;">Binance Pay السحب عبر</h3>
-            <p style="font-size: 11px; color: #666;">الحد الأدنى للسحب هو 1.00$</p>
-            
-            <input type="number" id="binance-id" placeholder="أدخل Binance ID الخاص بك">
-            
-            <button class="method-btn" onclick="processWithdraw('Binance Pay')">🟡 سحب فوراً إلى Binance Pay</button>
-            
-            <span class="close-modal" onclick="closeWithdraw()">❌ إغلاق النافذة</span>
-        </div>
-    </div>
-
-    <script>
-        let tg = window.Telegram.WebApp;
-        tg.expand();
-
-        let views = parseInt(localStorage.getItem('views')) || 0;
-        let balance = parseFloat(localStorage.getItem('balance')) || 0.0;
-
-        function updateUI() {
-            document.getElementById('view-txt').innerText = views;
-            document.getElementById('bal-txt').innerText = balance.toFixed(4) + "$";
-        }
-        updateUI();
-
-        function handleWatchClick() {
-            tg.openLink("https://otieu.com/4/10449394");
-            
-            const btn = document.getElementById('main-btn');
-            const msg = document.getElementById('loading-msg');
-            
-            btn.disabled = true; btn.style.opacity = "0.5"; msg.style.display = "block";
-
-            setTimeout(() => {
-                views++;
-                if (views % 20 === 0) { balance += 0.001; }
-                localStorage.setItem('views', views);
+            if (remaining <= 0) {
+                clearInterval(timer);
+                balance += 0.0005; // إضافة المكافأة
                 localStorage.setItem('balance', balance);
-                updateUI();
-                btn.disabled = false; btn.style.opacity = "1"; msg.style.display = "none";
-                tg.sendData(JSON.stringify({ "type": "ad_view", "views": views }));
-            }, 10000);
-        }
-
-        function openWithdraw() { document.getElementById('withdraw-modal').style.display = 'block'; }
-        function closeWithdraw() { document.getElementById('withdraw-modal').style.display = 'none'; }
-
-        function processWithdraw(method) {
-            let wallet = document.getElementById('binance-id').value;
-            
-            if (balance < 1.0) {
-                tg.showAlert(`رصيدك ${balance.toFixed(4)}$ غير كافٍ.\nتحتاج للوصول إلى 1.00$ للسحب.`);
-                return;
+                document.getElementById('balance').innerText = balance.toFixed(4);
+                
+                btn.disabled = false;
+                btn.style.opacity = "1";
+                msg.style.display = "none";
+                secSpan.innerText = "15";
+                
+                tg.HapticFeedback.notificationOccurred('success');
+            } else {
+                secSpan.innerText = remaining;
             }
-            
-            if (wallet.trim().length < 5) {
-                tg.showAlert("يرجى إدخال معرف Binance ID صحيح!");
-                return;
-            }
+        }, 100); // تحديث كل 100 ميللي ثانية لضمان الدقة العالية
+    }
 
-            let withdrawData = {
-                "type": "withdraw",
-                "method": method,
-                "amount": balance.toFixed(4),
-                "wallet": wallet
-            };
+    function showWithdrawModal() {
+        if (balance < 1.0) {
+            tg.showAlert("⚠️ عذراً، يجب أن يكون رصيدك 1.00$ على الأقل للسحب.");
+        } else {
+            document.getElementById('withdraw-modal').style.display = 'block';
+        }
+    }
 
-            tg.sendData(JSON.stringify(withdrawData));
-            tg.showAlert("✅ تم إرسال طلب سحب Binance Pay بنجاح!");
-            closeWithdraw();
+    function hideWithdrawModal() {
+        document.getElementById('withdraw-modal').style.display = 'none';
+    }
+
+    function submitWithdraw() {
+        const binanceId = document.getElementById('binance-id').value;
+        if (binanceId.length < 5) {
+            tg.showAlert("❌ يرجى كتابة معرف باينانس بشكل صحيح.");
+            return;
         }
 
-        function invite() {
-            const link = `https://t.me/PointsAdsbot?start=${tg.initDataUnsafe.user.id}`;
-            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=اربح المال من مشاهدة الإعلانات! 💰`);
-        }
-    </script>
+        tg.sendData(JSON.stringify({
+            type: "withdraw_request",
+            amount: balance.toFixed(4),
+            binance_id: binanceId
+        }));
+
+        tg.showAlert("✅ تم إرسال طلبك للمراجعة!");
+        hideWithdrawModal();
+    }
+</script>
+
 </body>
 </html>
+
