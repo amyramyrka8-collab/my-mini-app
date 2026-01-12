@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مركز الأرباح المطور</title>
-    
+
+    <meta name="5639f65b96d592a08e2ed71dca959184aade9946" content="5639f65b96d592a08e2ed71dca959184aade9946" />
+
     <script src="https://telegram.org/js/telegram-web-app.js?v=2.0"></script>
-    
     <script src='//libtl.com/sdk.js' data-zone='10449377' data-sdk='show_10449377'></script>
 
     <style>
@@ -42,6 +43,7 @@
 <div id="withdraw-modal">
     <div class="modal-content">
         <h3>طلب سحب رصيد</h3>
+        <p style="font-size: 12px; color: #666;">الحد الأدنى للسحب هو 1.00$</p>
         <input type="number" id="binance-id" placeholder="أدخل Binance ID الخاص بك">
         <button class="confirm-btn" onclick="submitWithdraw()">تأكيد السحب</button>
         <p onclick="hideWithdrawModal()" style="color:red; cursor:pointer; margin-top:15px; font-size:14px;">إلغاء</p>
@@ -55,7 +57,10 @@
     let balance = parseFloat(localStorage.getItem('balance')) || 0.0;
     document.getElementById('balance').innerText = balance.toFixed(4);
 
-    // 1. إعلان بيني (In-App Interstitial) يعمل تلقائياً عند فتح الصفحة
+    // الرابط الاحتياطي
+    const fallbackLink = "https://disappearinghew.com/edrymfcidf?key=893d88989505914e9836a0f44b52ddad";
+
+    // 1. تشغيل الإعلان البيني (In-App Interstitial)
     show_10449377({
       type: 'inApp',
       inAppSettings: {
@@ -67,22 +72,23 @@
       }
     });
 
-    // 2. وظيفة إعلان المكافأة (Rewarded Popup)
+    // 2. معالجة إعلان المكافأة
     function handleAdReward() {
         const btn = document.getElementById('ad-btn');
         btn.disabled = true;
         btn.style.opacity = "0.5";
 
-        // تشغيل الإعلان المنبثق للمكافأة
+        // محاولة تشغيل إعلان المكافأة من الـ SDK
         show_10449377('pop').then(() => {
-            // كود المكافأة عند انتهاء المشاهدة
-            addBalance(0.0010); // زيادة الرصيد (يمكنك تعديل القيمة)
-            tg.showAlert("✅ تهانينا! تمت إضافة المكافأة إلى رصيدك.");
+            // نجاح المشاهدة
+            addBalance(0.0010);
+            tg.showAlert("✅ تمت إضافة مكافأة المشاهدة بنجاح!");
             btn.disabled = false;
             btn.style.opacity = "1";
         }).catch(e => {
-            // في حالة حدوث خطأ أو إغلاق الإعلان قبل النهاية
-            tg.showAlert("❌ فشل تحميل الإعلان أو تم إغلاقه مبكراً.");
+            // في حال فشل الـ SDK، نفتح الرابط المباشر كخيار احتياطي
+            window.open(fallbackLink, '_blank');
+            tg.showAlert("⚠️ تعذر تحميل إعلان الفيديو، تم فتح إعلان بديل. انتظر قليلاً ثم حاول مرة أخرى.");
             btn.disabled = false;
             btn.style.opacity = "1";
         });
@@ -95,10 +101,9 @@
         if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
     }
 
-    // وظائف السحب
     function showWithdrawModal() {
         if (balance < 1.0) {
-            tg.showAlert("⚠️ الحد الأدنى للسحب هو 1.00$");
+            tg.showAlert("⚠️ رصيدك أقل من 1.00$");
         } else {
             document.getElementById('withdraw-modal').style.display = 'block';
         }
@@ -111,7 +116,7 @@
     function submitWithdraw() {
         const binanceId = document.getElementById('binance-id').value;
         if (binanceId.length < 5) {
-            tg.showAlert("❌ يرجى التأكد من Binance ID");
+            tg.showAlert("❌ يرجى إدخال Binance ID صحيح");
             return;
         }
 
@@ -121,7 +126,7 @@
             binance_id: binanceId
         }));
 
-        tg.showAlert("✅ تم إرسال طلب السحب!");
+        tg.showAlert("✅ تم إرسال طلب السحب للمسؤول!");
         hideWithdrawModal();
     }
 </script>
