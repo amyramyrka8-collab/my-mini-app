@@ -1,22 +1,20 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مركز الأرباح المطور</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=2.0"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; text-align: center; padding: 15px; margin: 0; }
-        .card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        .card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; border: 1px solid #e1e4e8; }
         .balance-box { background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 20px; border-radius: 15px; margin-bottom: 20px; }
         .balance-amount { font-size: 30px; font-weight: bold; color: #1976d2; }
         .btn { width: 100%; padding: 16px; border-radius: 12px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: 0.3s; }
-        .btn-main { background: #0088cc; color: white; }
+        .btn-main { background: #0088cc; color: white; box-shadow: 0 4px 12px rgba(0,136,204,0.3); }
         .btn-withdraw { background: #ff9800; color: white; }
         #timer-msg { display: none; color: #d32f2f; font-weight: bold; margin-top: 10px; padding: 10px; background: #ffebee; border-radius: 10px; }
         
-        /* نافذة السحب */
         #withdraw-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 1000; }
         .modal-content { background: white; width: 85%; max-width: 320px; margin: 25% auto; padding: 20px; border-radius: 20px; }
         .modal-content input { width: 90%; padding: 12px; margin: 15px 0; border-radius: 10px; border: 1px solid #ddd; text-align: center; font-size: 16px; }
@@ -52,15 +50,13 @@
     tg.expand();
 
     let balance = parseFloat(localStorage.getItem('balance')) || 0.0;
-    let lastLinkUsed = localStorage.getItem('lastLink') || "2"; // للتبديل بين الروابط
+    let lastLinkUsed = localStorage.getItem('lastLink') || "2";
     document.getElementById('balance').innerText = balance.toFixed(4);
 
-    // الروابط الخاصة بك
     const link1 = "https://disappearinghew.com/kywvmbxhmq?key=b7c5f19306a7d0e359dedad1002e9053";
     const link2 = "https://disappearinghew.com/edrymfcidf?key=893d88989505914e9836a0f44b52ddad";
 
     function startAdProcess() {
-        // تحديد الرابط الذي سيفتح الآن (تبديل)
         let currentLink = (lastLinkUsed === "2") ? link1 : link2;
         localStorage.setItem('lastLink', (lastLinkUsed === "2") ? "1" : "2");
         lastLinkUsed = localStorage.getItem('lastLink');
@@ -76,7 +72,6 @@
         msg.style.display = "block";
 
         let timeLeft = 15;
-        // نظام عداد دقيق يعتمد على التوقيت الفعلي للنظام
         let endTime = Date.now() + (timeLeft * 1000);
 
         const timer = setInterval(() => {
@@ -85,7 +80,7 @@
 
             if (remaining <= 0) {
                 clearInterval(timer);
-                balance += 0.0005; // إضافة المكافأة
+                balance += 0.0005;
                 localStorage.setItem('balance', balance);
                 document.getElementById('balance').innerText = balance.toFixed(4);
                 
@@ -94,11 +89,14 @@
                 msg.style.display = "none";
                 secSpan.innerText = "15";
                 
-                tg.HapticFeedback.notificationOccurred('success');
+                // تشغيل الاهتزاز عند النجاح
+                if (tg.HapticFeedback) {
+                    tg.HapticFeedback.notificationOccurred('success');
+                }
             } else {
                 secSpan.innerText = remaining;
             }
-        }, 100); // تحديث كل 100 ميللي ثانية لضمان الدقة العالية
+        }, 100);
     }
 
     function showWithdrawModal() {
@@ -133,4 +131,3 @@
 
 </body>
 </html>
-
