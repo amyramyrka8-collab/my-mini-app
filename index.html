@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مركز الأرباح المطور</title>
+    
     <script src="https://telegram.org/js/telegram-web-app.js?v=2.0"></script>
+    
+    <script src='//libtl.com/sdk.js' data-zone='10449377' data-sdk='show_10449377'></script>
+
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; text-align: center; padding: 15px; margin: 0; }
         .card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; border: 1px solid #e1e4e8; }
@@ -29,8 +33,8 @@
         <span id="balance" class="balance-amount">0.0000</span> <span style="font-weight: bold; color: #1976d2;">$</span>
     </div>
 
-    <button id="ad-btn" class="btn btn-main" onclick="startAdProcess()">📺 شاهد إعلان واربح</button>
-    <div id="timer-msg">⏳ يرجى الانتظار: <span id="seconds">15</span> ثانية...</div>
+    <button id="ad-btn" class="btn btn-main" onclick="handleAdReward()">📺 شاهد إعلان المكافأة واربح</button>
+    <div id="timer-msg">⏳ يرجى الانتظار لإتمام المعالجة...</div>
 
     <button class="btn btn-withdraw" onclick="showWithdrawModal()">💳 سحب الأرباح (Binance)</button>
 </div>
@@ -38,7 +42,6 @@
 <div id="withdraw-modal">
     <div class="modal-content">
         <h3>طلب سحب رصيد</h3>
-        <p style="font-size: 12px; color: #666;">الحد الأدنى للسحب هو 1.00$</p>
         <input type="number" id="binance-id" placeholder="أدخل Binance ID الخاص بك">
         <button class="confirm-btn" onclick="submitWithdraw()">تأكيد السحب</button>
         <p onclick="hideWithdrawModal()" style="color:red; cursor:pointer; margin-top:15px; font-size:14px;">إلغاء</p>
@@ -50,58 +53,52 @@
     tg.expand();
 
     let balance = parseFloat(localStorage.getItem('balance')) || 0.0;
-    let lastLinkUsed = localStorage.getItem('lastLink') || "2";
     document.getElementById('balance').innerText = balance.toFixed(4);
 
-    const link1 = "https://disappearinghew.com/kywvmbxhmq?key=b7c5f19306a7d0e359dedad1002e9053";
-    const link2 = "https://disappearinghew.com/edrymfcidf?key=893d88989505914e9836a0f44b52ddad";
+    // 1. إعلان بيني (In-App Interstitial) يعمل تلقائياً عند فتح الصفحة
+    show_10449377({
+      type: 'inApp',
+      inAppSettings: {
+        frequency: 2,
+        capping: 0.1,
+        interval: 30,
+        timeout: 5,
+        everyPage: false
+      }
+    });
 
-    function startAdProcess() {
-        let currentLink = (lastLinkUsed === "2") ? link1 : link2;
-        localStorage.setItem('lastLink', (lastLinkUsed === "2") ? "1" : "2");
-        lastLinkUsed = localStorage.getItem('lastLink');
-
-        window.open(currentLink, '_blank');
-
+    // 2. وظيفة إعلان المكافأة (Rewarded Popup)
+    function handleAdReward() {
         const btn = document.getElementById('ad-btn');
-        const msg = document.getElementById('timer-msg');
-        const secSpan = document.getElementById('seconds');
-        
         btn.disabled = true;
         btn.style.opacity = "0.5";
-        msg.style.display = "block";
 
-        let timeLeft = 15;
-        let endTime = Date.now() + (timeLeft * 1000);
-
-        const timer = setInterval(() => {
-            let now = Date.now();
-            let remaining = Math.round((endTime - now) / 1000);
-
-            if (remaining <= 0) {
-                clearInterval(timer);
-                balance += 0.0005;
-                localStorage.setItem('balance', balance);
-                document.getElementById('balance').innerText = balance.toFixed(4);
-                
-                btn.disabled = false;
-                btn.style.opacity = "1";
-                msg.style.display = "none";
-                secSpan.innerText = "15";
-                
-                // تشغيل الاهتزاز عند النجاح
-                if (tg.HapticFeedback) {
-                    tg.HapticFeedback.notificationOccurred('success');
-                }
-            } else {
-                secSpan.innerText = remaining;
-            }
-        }, 100);
+        // تشغيل الإعلان المنبثق للمكافأة
+        show_10449377('pop').then(() => {
+            // كود المكافأة عند انتهاء المشاهدة
+            addBalance(0.0010); // زيادة الرصيد (يمكنك تعديل القيمة)
+            tg.showAlert("✅ تهانينا! تمت إضافة المكافأة إلى رصيدك.");
+            btn.disabled = false;
+            btn.style.opacity = "1";
+        }).catch(e => {
+            // في حالة حدوث خطأ أو إغلاق الإعلان قبل النهاية
+            tg.showAlert("❌ فشل تحميل الإعلان أو تم إغلاقه مبكراً.");
+            btn.disabled = false;
+            btn.style.opacity = "1";
+        });
     }
 
+    function addBalance(amount) {
+        balance += amount;
+        localStorage.setItem('balance', balance);
+        document.getElementById('balance').innerText = balance.toFixed(4);
+        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    }
+
+    // وظائف السحب
     function showWithdrawModal() {
         if (balance < 1.0) {
-            tg.showAlert("⚠️ عذراً، يجب أن يكون رصيدك 1.00$ على الأقل للسحب.");
+            tg.showAlert("⚠️ الحد الأدنى للسحب هو 1.00$");
         } else {
             document.getElementById('withdraw-modal').style.display = 'block';
         }
@@ -114,7 +111,7 @@
     function submitWithdraw() {
         const binanceId = document.getElementById('binance-id').value;
         if (binanceId.length < 5) {
-            tg.showAlert("❌ يرجى كتابة معرف باينانس بشكل صحيح.");
+            tg.showAlert("❌ يرجى التأكد من Binance ID");
             return;
         }
 
@@ -124,7 +121,7 @@
             binance_id: binanceId
         }));
 
-        tg.showAlert("✅ تم إرسال طلبك للمراجعة!");
+        tg.showAlert("✅ تم إرسال طلب السحب!");
         hideWithdrawModal();
     }
 </script>
